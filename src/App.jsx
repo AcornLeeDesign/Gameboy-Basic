@@ -12,7 +12,7 @@ function App() {
   const handleModelLoaded = () => {
     setIsModelLoaded(true);
     // Keep loading screen for 3 seconds, then go to default
-    setTimeout(() => setScreenContent('default'), 4000);
+    setTimeout(() => setScreenContent('footer'));
   };
 
   return (
