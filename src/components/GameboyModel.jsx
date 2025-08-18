@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useGLTF, Html, useCursor } from '@react-three/drei';
+import { useGLTF, Html } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 
 function GameboyModel({ onLoaded, screenContent = 'default', GameboyScreenComponent, ...props }) {
@@ -7,11 +7,7 @@ function GameboyModel({ onLoaded, screenContent = 'default', GameboyScreenCompon
   const url = base.endsWith('/') ? `${base}gameboy_2.gltf` : `${base}/gameboy_2.gltf`;
   const { scene } = useGLTF(url, true);
   const meshRef = useRef();
-  const [hovered, setHovered] = useState(false);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
-  
-  // Use the useCursor hook for visual feedback
-  useCursor(hovered, 'pointer', 'auto');
   
   // Global mousemove listener
   useEffect(() => {
@@ -66,8 +62,6 @@ function GameboyModel({ onLoaded, screenContent = 'default', GameboyScreenCompon
       />
       <group
         ref={meshRef}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
         {...props}
       >
         <primitive object={scene} />
@@ -81,9 +75,6 @@ function GameboyModel({ onLoaded, screenContent = 'default', GameboyScreenCompon
           style={{
             width: '610px',
             height: '810px',
-            pointerEvents: 'none',
-            userSelect: 'none',
-            touchAction: 'none',
             WebkitUserSelect: 'none',
             MozUserSelect: 'none',
             msUserSelect: 'none'

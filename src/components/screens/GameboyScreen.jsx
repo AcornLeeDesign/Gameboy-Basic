@@ -9,8 +9,6 @@ function GameboyScreen({ content = 'default' }) {
         display: 'flex',
         fontSize: '1rem',
         color: '#0f380f',
-        userSelect: 'none',
-        pointerEvents: 'none',
       }}
     >
       {content === 'footer' && <Footer key="footer" />}
