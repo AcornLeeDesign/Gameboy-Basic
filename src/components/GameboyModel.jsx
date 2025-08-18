@@ -1,0 +1,99 @@
+import { useEffect, useRef, useState } from 'react';
+import { useGLTF, Html, useCursor } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+
+function GameboyModel({ onLoaded, screenContent = 'default', GameboyScreenComponent, ...props }) {
+  const base = import.meta.env.BASE_URL;
+  const url = base.endsWith('/') ? `${base}gameboy_2.gltf` : `${base}/gameboy_2.gltf`;
+  const { scene } = useGLTF(url, true);
+  const meshRef = useRef();
+  const [hovered, setHovered] = useState(false);
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  
+  // Use the useCursor hook for visual feedback
+  useCursor(hovered, 'pointer', 'auto');
+  
+  // Global mousemove listener
+  useEffect(() => {
+    const handleMouseMove = (event) => {
+      const x = (event.clientX / window.innerWidth) * 2 - 1;
+      const y = -(event.clientY / window.innerHeight) * 2 + 1;
+      setMouse({ x, y });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+  
+  // Fix up circuitboard materials and set render order for Top_support
+  useEffect(() => {
+    scene.traverse((object) => {
+      if (object.isMesh && object.name) {
+        const meshName = object.name.toLowerCase();
+        if (meshName.includes('circuitboard') || meshName.includes('mini_circuit')) {
+          object.material.opacity = 1;
+          object.material.transparent = false;
+        }
+        
+        // Set Top_support to render after case mesh
+        if (object.name === 'Top_support') {
+          object.renderOrder = 1;
+        }
+      }
+    });
+    if (onLoaded) onLoaded();
+  }, [scene, onLoaded]);
+
+  // Smooth rotation based on mouse position across entire canvas
+  useFrame(() => {
+    if (meshRef.current) {
+      // Tilt model based on mouse position
+      // Increased tilt significantly: from 0.07 to 0.12 radians (≈6.9 degrees)
+      const maxRotation = 0.12;
+      meshRef.current.rotation.x = mouse.y * maxRotation;
+      meshRef.current.rotation.y = mouse.x * maxRotation;
+    }
+  });
+
+  return (
+    <>
+      <directionalLight 
+        position={[0.4, 2, 0]} 
+        intensity={1} 
+        castShadow 
+        shadow-mapSize-width={128}
+        shadow-mapSize-height={128}
+      />
+      <group
+        ref={meshRef}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+        {...props}
+      >
+        <primitive object={scene} />
+        <Html
+          position={[0, 0.55, -0.7]}
+          rotation={[Math.PI / -2, 0, 0]}
+          transform
+          occlude
+          distanceFactor={1}
+          raycast={() => null}
+          style={{
+            width: '610px',
+            height: '810px',
+            pointerEvents: 'none',
+            userSelect: 'none',
+            touchAction: 'none',
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none'
+          }}
+        >
+          <GameboyScreenComponent content={screenContent} />
+        </Html>
+      </group>
+    </>
+  );
+}
+
+export default GameboyModel;
