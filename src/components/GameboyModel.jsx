@@ -8,9 +8,50 @@ function GameboyModel({ onLoaded, screenContent = 'default', GameboyScreenCompon
   const { scene } = useGLTF(url, true);
   const meshRef = useRef();
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(false);
+  const prevWidthRef = useRef(window.innerWidth);
   
-  // Global mousemove listener
+  // Optimized mobile detection with threshold-crossing guard
   useEffect(() => {
+    const MOBILE_BREAKPOINT = 768;
+    
+    const checkMobile = () => {
+      const currentWidth = window.innerWidth;
+      const prevWidth = prevWidthRef.current;
+      
+      // Only update if crossing the breakpoint threshold
+      const wasMobile = prevWidth <= MOBILE_BREAKPOINT;
+      const isMobileNow = currentWidth <= MOBILE_BREAKPOINT;
+      
+      if (wasMobile !== isMobileNow) {
+        setIsMobile(isMobileNow);
+        console.log(isMobileNow ? "mobile" : "desktop");
+      }
+      
+      prevWidthRef.current = currentWidth;
+    };
+    
+    // Initial check
+    checkMobile();
+    
+    // Throttled resize listener to avoid excessive calls
+    let resizeTimeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(checkMobile, 100);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
+    };
+  }, []);
+  
+  // Global mousemove listener - only on desktop
+  useEffect(() => {
+    if (isMobile) return; // Don't add mouse listener on mobile
+    
     const handleMouseMove = (event) => {
       const x = (event.clientX / window.innerWidth) * 2 - 1;
       const y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -19,7 +60,7 @@ function GameboyModel({ onLoaded, screenContent = 'default', GameboyScreenCompon
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  }, [isMobile]);
   
   // Fix up circuitboard materials and set render order for Top_support
   useEffect(() => {
@@ -40,9 +81,9 @@ function GameboyModel({ onLoaded, screenContent = 'default', GameboyScreenCompon
     if (onLoaded) onLoaded();
   }, [scene, onLoaded]);
 
-  // Smooth rotation based on mouse position across entire canvas
+  // Smooth rotation based on mouse position across entire canvas - only on desktop
   useFrame(() => {
-    if (meshRef.current) {
+    if (meshRef.current && !isMobile) {
       // Tilt model based on mouse position
       // Increased tilt significantly: from 0.07 to 0.12 radians (≈6.9 degrees)
       const maxRotation = 0.12;
