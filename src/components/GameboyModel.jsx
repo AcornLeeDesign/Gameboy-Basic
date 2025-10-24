@@ -106,6 +106,8 @@ function GameboyModel({ onLoaded, screenContent = 'default', GameboyScreenCompon
         {...props}
       >
         <primitive object={scene} />
+
+        {/* Main screen - displays primary content */}
         <Html
           position={[0, 0.55, -0.7]}
           rotation={[Math.PI / -2, 0, 0]}
@@ -121,7 +123,26 @@ function GameboyModel({ onLoaded, screenContent = 'default', GameboyScreenCompon
             msUserSelect: 'none'
           }}
         >
-          <GameboyScreenComponent content={screenContent} />
+          <GameboyScreenComponent content="footer" />
+        </Html>
+        
+        {/* Small screen - displays loading animation */}
+        <Html
+          position={[0.0, 0.4, 0.61]}
+          rotation={[Math.PI / -2, 0, 0]}
+          transform
+          occlude
+          distanceFactor={1}
+          raycast={() => null}
+          style={{
+            width: '400px',
+            height: '100px',
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none'
+          }}
+        >
+          <GameboyScreenComponent content="smallscreen" />
         </Html>
       </group>
     </>
