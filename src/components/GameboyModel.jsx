@@ -1,9 +1,18 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { useGLTF, Html } from "@react-three/drei"
 import { useFrame } from "@react-three/fiber"
 
 import Footer from "./screens/Footer.jsx"
 import SmallScreen from "./screens/SmallScreen.jsx"
+
+const FOOTER_TEXTS = [
+  "A bit farther, reach out a bit farther.>",
+  "Visions and emotions fly like birds.>",
+  "Difficult to capture > precious in the moment > on endless journeys.>",
+  "Imagination is only beautiful when realized.>",
+  "<.Curiosity is",
+  "All we have.>",
+]
 
 function GameboyModel({ onLoaded }) {
   const base = import.meta.env.BASE_URL
@@ -13,15 +22,16 @@ function GameboyModel({ onLoaded }) {
 
   const { scene } = useGLTF(url)
   const groupRef = useRef()
-
-  const [mouse, setMouse] = useState({ x: 0, y: 0 })
+  const mouseRef = useRef({ x: 0, y: 0 })
+  const frameAccumulator = useRef(0)
 
   // Mouse movement (desktop only)
   useEffect(() => {
     const handleMouseMove = (e) => {
       const x = (e.clientX / window.innerWidth) * 2 - 1
       const y = -(e.clientY / window.innerHeight) * 2 + 1
-      setMouse({ x, y })
+      mouseRef.current.x = x
+      mouseRef.current.y = y
     }
 
     window.addEventListener("mousemove", handleMouseMove)
@@ -69,12 +79,17 @@ function GameboyModel({ onLoaded }) {
   }, [scene, onLoaded])
 
   // Subtle tilt animation
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!groupRef.current) return
+    // Cap at ~60fps to reduce allocation/GC pressure
+    frameAccumulator.current += delta
+    if (frameAccumulator.current < 1 / 60) return
+    frameAccumulator.current = 0
 
     const maxRotation = 0.12
-    groupRef.current.rotation.x = mouse.y * maxRotation
-    groupRef.current.rotation.y = mouse.x * maxRotation
+    const { x, y } = mouseRef.current
+    groupRef.current.rotation.x = y * maxRotation
+    groupRef.current.rotation.y = x * maxRotation
   })
 
   return (
@@ -93,14 +108,7 @@ function GameboyModel({ onLoaded }) {
         >
           <div className="w-160 h-212">
             <Footer
-              texts={[
-                "A bit farther, reach out a bit farther.>",
-                "Visions and emotions fly like birds.>",
-                "Difficult to capture > precious in the moment > on endless journeys.>",
-                "Imagination is only beautiful when realized.>",
-                "<.Curiosity is",
-                "All we have.>"
-              ]}
+              texts={FOOTER_TEXTS}
             />
           </div>
         </Html>
