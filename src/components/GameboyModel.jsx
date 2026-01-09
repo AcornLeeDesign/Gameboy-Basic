@@ -101,18 +101,18 @@ function GameboyModel({ onLoaded }) {
   }, [scene, onLoaded])
 
   // Subtle tilt animation
-  // useFrame((_, delta) => {
-  //   if (!groupRef.current) return
-  //   // Cap at ~60fps to reduce allocation/GC pressure
-  //   frameAccumulator.current += delta
-  //   if (frameAccumulator.current < 1 / 60) return
-  //   frameAccumulator.current = 0
+  useFrame((_, delta) => {
+    if (!groupRef.current) return
+    // Cap at ~60fps to reduce allocation/GC pressure
+    frameAccumulator.current += delta
+    if (frameAccumulator.current < 1 / 60) return
+    frameAccumulator.current = 0
 
-  //   const maxRotation = 0.12
-  //   const { x, y } = mouseRef.current
-  //   groupRef.current.rotation.x = y * maxRotation
-  //   groupRef.current.rotation.y = x * maxRotation
-  // })
+    const maxRotation = 0.12
+    const { x, y } = mouseRef.current
+    groupRef.current.rotation.x = y * maxRotation
+    groupRef.current.rotation.y = x * maxRotation
+  })
 
   return (
     <>
