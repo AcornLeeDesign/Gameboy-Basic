@@ -11,6 +11,7 @@ function App() {
   return (
     <div className="h-screen w-screen bg-black">
       <Canvas
+        frameloop="demand"
         shadows
         dpr={Math.min(window.devicePixelRatio * 1.5, 2)}
         camera={{ fov: 50, position: [0, 9, 0] }}

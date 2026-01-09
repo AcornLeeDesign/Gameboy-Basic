@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import { useGLTF, Html } from "@react-three/drei"
-import { useFrame } from "@react-three/fiber"
+import { useFrame, useThree } from "@react-three/fiber"
 
 import Footer from "./screens/Footer.jsx"
 import SmallScreen from "./screens/SmallScreen.jsx"
@@ -24,6 +24,7 @@ function GameboyModel({ onLoaded }) {
   const groupRef = useRef()
   const mouseRef = useRef({ x: 0, y: 0 })
   const frameAccumulator = useRef(0)
+  const { invalidate } = useThree()
 
   // Mouse movement (desktop only)
   useEffect(() => {
@@ -37,6 +38,27 @@ function GameboyModel({ onLoaded }) {
     window.addEventListener("mousemove", handleMouseMove)
     return () => window.removeEventListener("mousemove", handleMouseMove)
   }, [])
+
+  // Global render loop throttle to ~60fps (Canvas frameloop is "demand")
+  useEffect(() => {
+    const targetFrameMs = 1000 / 60
+    let lastTime = performance.now() - targetFrameMs
+    let rafId
+
+    const tick = () => {
+      const now = performance.now()
+      if (now - lastTime >= targetFrameMs) {
+        lastTime = now
+        invalidate()
+      }
+      rafId = requestAnimationFrame(tick)
+    }
+
+    rafId = requestAnimationFrame(tick)
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId)
+    }
+  }, [invalidate])
 
   // Fix materials + notify App
   useEffect(() => {
@@ -79,18 +101,18 @@ function GameboyModel({ onLoaded }) {
   }, [scene, onLoaded])
 
   // Subtle tilt animation
-  useFrame((_, delta) => {
-    if (!groupRef.current) return
-    // Cap at ~60fps to reduce allocation/GC pressure
-    frameAccumulator.current += delta
-    if (frameAccumulator.current < 1 / 60) return
-    frameAccumulator.current = 0
+  // useFrame((_, delta) => {
+  //   if (!groupRef.current) return
+  //   // Cap at ~60fps to reduce allocation/GC pressure
+  //   frameAccumulator.current += delta
+  //   if (frameAccumulator.current < 1 / 60) return
+  //   frameAccumulator.current = 0
 
-    const maxRotation = 0.12
-    const { x, y } = mouseRef.current
-    groupRef.current.rotation.x = y * maxRotation
-    groupRef.current.rotation.y = x * maxRotation
-  })
+  //   const maxRotation = 0.12
+  //   const { x, y } = mouseRef.current
+  //   groupRef.current.rotation.x = y * maxRotation
+  //   groupRef.current.rotation.y = x * maxRotation
+  // })
 
   return (
     <>
